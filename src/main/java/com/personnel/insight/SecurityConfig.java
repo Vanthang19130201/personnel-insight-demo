@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 
 @Configuration
 public class SecurityConfig {
@@ -51,8 +51,8 @@ public class SecurityConfig {
                 "/login.html",
                 "/login.css",
                 "/login.js",
-                "/favicon.ico",
                 "/api/csrf",
+                "/favicon.ico",
                 "/error"
             ).permitAll()
             .anyRequest().hasRole("ADMIN")
@@ -69,11 +69,18 @@ public class SecurityConfig {
         http.logout(logout -> logout
             .logoutUrl("/logout")
             .logoutSuccessUrl("/login.html?logout")
+            .invalidateHttpSession(true)
+            .clearAuthentication(true)
+            .deleteCookies("JSESSIONID", "XSRF-TOKEN")
         );
 
-        // Sử dụng bảo vệ CSRF mặc định:
-        // token gắn với phiên đăng nhập trên server.
-        http.csrf(Customizer.withDefaults());
+        // CSRF được lưu theo phiên trên máy chủ.
+        // Không dùng CookieCsrfTokenRepository cũ.
+        http.csrf(csrf -> csrf
+            .csrfTokenRepository(
+                new HttpSessionCsrfTokenRepository()
+            )
+        );
 
         http.headers(headers -> headers
             .frameOptions(frame -> frame.deny())
