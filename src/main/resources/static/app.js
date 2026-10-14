@@ -1,6 +1,7 @@
 'use strict';
 /* Personnel Insight — bản Spring Boot có xác thực, dùng dữ liệu giả khi thử nghiệm. */
-let CSRF_TOKEN='';
+let CSRF_TOKEN = '';
+let CSRF_HEADER = 'X-CSRF-TOKEN';
 async function api(path,options={}){
  const headers={'Content-Type':'application/json',...(options.headers||{})};
  if(options.method && !['GET','HEAD'].includes(options.method.toUpperCase()))headers['X-XSRF-TOKEN']=CSRF_TOKEN;
