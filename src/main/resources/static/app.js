@@ -75,4 +75,58 @@ async function importJson(e){const file=e.target.files?.[0];if(!file)return;if(f
 document.addEventListener('click',e=>{const nav=e.target.closest('[data-page],[data-nav]');if(nav){navigate(nav.dataset.page||nav.dataset.nav);return}const btn=e.target.closest('[data-action]');if(!btn)return;const action=btn.dataset.action;const id=btn.dataset.id;if(action==='add')openForm();if(action==='edit')openForm(id);if(action==='remove')removePerson(id);if(action==='csv')exportCsv();if(action==='backup')exportJson();if(action==='print')window.print();});
 byId('personForm').addEventListener('submit',saveForm);byId('closeModal').addEventListener('click',closeForm);byId('cancelModal').addEventListener('click',closeForm);byId('personModal').addEventListener('click',e=>{if(e.target.id==='personModal')closeForm()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeForm()});byId('menuToggle').addEventListener('click',()=>byId('sidebar').classList.toggle('open'));byId('todayLabel').textContent=new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'});(async()=>{try{await initCsrf();await refreshPeople();navigate('dashboard');}catch(e){byId('main').innerHTML='<section class="panel"><h2>Không tải được dữ liệu</h2><p>'+esc(e.message)+'</p><button class="btn btn-primary" onclick="location.reload()">Thử lại</button></section>';}})();
 
-byId('logoutButton').addEventListener('click',async()=>{try{await api('/logout',{method:'POST'});location.href='/login.html?logout';}catch(e){alert(e.message)}});
+
+byId('logoutButton').addEventListener('click', async () => {
+
+    const button = byId('logoutButton');
+
+    button.disabled = true;
+    button.textContent = 'Đang đăng xuất...';
+
+    try {
+
+        // Lấy CSRF token mới nhất trước khi đăng xuất
+        const csrfResponse = await fetch('/api/csrf', {
+            credentials: 'same-origin',
+            cache: 'no-store'
+        });
+
+        if (!csrfResponse.ok) {
+            throw new Error('Không lấy được mã bảo mật');
+        }
+
+        const csrf = await csrfResponse.json();
+
+        // Gửi yêu cầu đăng xuất với CSRF token hợp lệ
+        const response = await fetch('/logout', {
+            method: 'POST',
+            credentials: 'same-origin',
+            redirect: 'follow',
+            headers: {
+                [csrf.headerName]: csrf.token
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(
+                'Đăng xuất thất bại: HTTP ' + response.status
+            );
+        }
+
+        // Spring Security đã xử lý đăng xuất
+        // Chuyển về trang đăng nhập
+        window.location.replace('/login.html?logout');
+
+    } catch (error) {
+
+        console.error('Logout error:', error);
+
+        alert(
+            'Không thể đăng xuất:\n' + error.message
+        );
+
+        button.disabled = false;
+        button.textContent = 'Đăng xuất';
+    }
+});
+
