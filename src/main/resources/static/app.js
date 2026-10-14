@@ -4,7 +4,12 @@ let CSRF_TOKEN = '';
 let CSRF_HEADER = 'X-CSRF-TOKEN';
 async function api(path,options={}){
  const headers={'Content-Type':'application/json',...(options.headers||{})};
- if(options.method && !['GET','HEAD'].includes(options.method.toUpperCase()))headers['X-XSRF-TOKEN']=CSRF_TOKEN;
+if (
+    options.method &&
+    !['GET', 'HEAD'].includes(options.method.toUpperCase())
+) {
+    headers[CSRF_HEADER] = CSRF_TOKEN;
+}
  const res=await fetch(path,{credentials:'same-origin',...options,headers});
  if(res.redirected && res.url.includes('/login.html')){location.href='/login.html';throw Error('Phiên đăng nhập đã hết hạn');}
  if(res.status===401||res.status===403)throw Error('Không có quyền hoặc phiên đăng nhập đã hết hạn');
