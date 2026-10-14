@@ -17,7 +17,12 @@ if (
  return res.status===204?null:res.json();
 }
 async function refreshPeople(){people=(await api('/api/people')).map(cleanPerson).filter(Boolean);}
-async function initCsrf(){const d=await api('/api/csrf');CSRF_TOKEN=d.token;}
+async function initCsrf() {
+    const response = await api('/api/csrf');
+
+    CSRF_TOKEN = response.token;
+    CSRF_HEADER = response.headerName || 'X-CSRF-TOKEN';
+}
 
 const $=sel=>document.querySelector(sel);
 const byId=id=>document.getElementById(id);
